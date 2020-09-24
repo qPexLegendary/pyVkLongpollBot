@@ -8,6 +8,7 @@ class Bot:
         self.token = token
         self.group_id = group_id
 
+    # Обновить данные для подключения к longpoll
     def update_longpoll(self):
         response = self.send_request("groups.getLongPollServer", {
             'group_id': self.group_id
@@ -17,7 +18,7 @@ class Bot:
         self.key = response['key']
         self.ts = response['ts']
 
-    # Старт
+    # Старт бота
     def start(self):
         self.update_longpoll()
 
