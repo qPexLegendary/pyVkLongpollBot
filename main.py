@@ -1,6 +1,8 @@
 import bot
-
+import bot_exceptions as ex
 
 if __name__ == '__main__':
-    bot_object = bot.Bot(token="", group_id=0)
-    bot_object.start()
+    try:
+        bot.Bot(token="", group_id=0).start()
+    except ex.AuthFail:
+        print("Введены неверные данные для подключения!")

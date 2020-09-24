@@ -1,7 +1,10 @@
 import requests
+import bot_exceptions as ex
 
 
 class Bot:
+
+    enabled = True
 
     def __init__(self, token: str, group_id: int):
         self.server = self.ts = self.key = ""
@@ -12,7 +15,11 @@ class Bot:
     def update_longpoll(self):
         response = self.send_request("groups.getLongPollServer", {
             'group_id': self.group_id
-        })['response']
+        })
+
+        if "error" in response:
+            raise ex.AuthFail
+        response = response["response"]
 
         self.server = response['server']
         self.key = response['key']
@@ -22,7 +29,7 @@ class Bot:
     def start(self):
         self.update_longpoll()
 
-        while True:
+        while self.enabled:
             print(self.get_longpoll_data())
 
     # Отправка запороса к api серверу
