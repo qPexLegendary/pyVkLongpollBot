@@ -10,6 +10,7 @@ class Bot:
         self.server = self.ts = self.key = ""
         self.token = token
         self.group_id = group_id
+        self.messages = MessagesMethods(self)
 
     # Обновить данные для подключения к longpoll
     def update_longpoll(self):
@@ -67,3 +68,53 @@ class Bot:
     async def action(self, event_type: str, data: dict, event_id: str):
         # TODO...
         pass
+
+
+def is_peer_id_own_by_chat(peer_id) -> bool:
+    return 2000000000 < peer_id
+
+
+def get_reply_messages(message_object: dict) -> list:
+    lst = list()
+    if "fwd_messages" in message_object:
+        lst += message_object['fwd_messages']
+    if "reply_message" in message_object:
+        lst.append(message_object['reply_message'])
+    return lst
+
+
+class MessagesMethods:
+
+    def __init__(self, bot: Bot):
+        self.bot = bot
+
+    # Отправка сообщения
+    def messages_send(self,
+                      peer_id: int,
+                      message: str = "",
+                      attachment: str = None,
+                      keyboard: str = None,
+                      dont_parse_links: bool = False
+                      ) -> dict:
+        params = {
+            'random_id': 0,
+            'peer_id': peer_id,
+            'message': message,
+            'dont_parse_links': dont_parse_links
+        }
+
+        if attachment is not None:
+            params['attachment'] = attachment
+        if keyboard is not None:
+            params['keyboard'] = keyboard
+
+        return self.bot.send_request("messages.send", params)
+
+    def remove_user_from_chat(self, chat_id: int, target: int):
+        if is_peer_id_own_by_chat(chat_id):
+            chat_id -= 2000000000
+
+        self.bot.send_request("messages.removeChatUser", {
+            'chat_id': chat_id,
+            'user_id': target,
+        })
