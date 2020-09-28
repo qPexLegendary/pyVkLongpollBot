@@ -1,9 +1,9 @@
 import requests
+import asyncio
 import bot_exceptions as ex
 
 
 class Bot:
-
     enabled = True
 
     def __init__(self, token: str, group_id: int):
@@ -25,12 +25,20 @@ class Bot:
         self.key = response['key']
         self.ts = response['ts']
 
-    # Старт бота
     def start(self):
         self.update_longpoll()
 
         while self.enabled:
-            print(self.get_longpoll_data())
+            updates = self.get_longpoll_data()['updates']
+            if not updates:
+                continue
+
+            for update in updates:
+                asyncio.run(self.action(
+                    update['type'],
+                    update['object'],
+                    update['event_id']
+                ))
 
     # Отправка запороса к api серверу
     def send_request(self, method: str, params: dict) -> dict:
@@ -54,3 +62,8 @@ class Bot:
             self.update_longpoll()
         self.ts = request['ts']
         return request
+
+    # Ассинхронный метод в котором производить какие-то действия
+    async def action(self, event_type: str, data: dict, event_id: str):
+        # TODO...
+        pass
