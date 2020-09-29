@@ -11,6 +11,7 @@ class Bot:
         self.token = token
         self.group_id = group_id
         self.messages = MessagesMethods(self)
+        self.event_listener = EventListener()
 
     # Обновить данные для подключения к longpoll
     def update_longpoll(self):
@@ -64,16 +65,17 @@ class Bot:
         self.ts = request['ts']
         return request
 
-    # Ассинхронный метод в котором производить какие-то действия
+    # В данном методе обрабатываются различные события
     async def action(self, event_type: str, data: dict, event_id: str):
-        # TODO...
-        pass
+        self.event_listener.execute(event_type, data, event_id)
 
 
+# Проверка: является ли peer_id чатом?
 def is_peer_id_own_by_chat(peer_id) -> bool:
     return 2000000000 < peer_id
 
 
+# Получение прикрепленных сообщений
 def get_reply_messages(message_object: dict) -> list:
     lst = list()
     if "fwd_messages" in message_object:
@@ -81,6 +83,34 @@ def get_reply_messages(message_object: dict) -> list:
     if "reply_message" in message_object:
         lst.append(message_object['reply_message'])
     return lst
+
+
+class EventListener(object):
+
+    def __init__(self):
+        self.listeners = {}
+
+    # Обработать события
+    def execute(self, event_type: str, data: dict, event_id: str):
+        if event_type not in self.listeners:
+            return
+
+        for method in self.listeners[event_type]:
+            method(data, event_id)
+
+
+# Добавиляет метод в обработчик событий
+def add_method_to_listener(listeners: dict, event_type: str):
+    def add_to_listener_list(func):
+        if event_type not in listeners:
+            listeners[event_type] = []
+        listeners[event_type].append(func)
+
+        def execute():
+            print("c")
+            func()
+        return execute
+    return add_to_listener_list
 
 
 class MessagesMethods:
@@ -110,6 +140,7 @@ class MessagesMethods:
 
         return self.bot.send_request("messages.send", params)
 
+    # Удаляет пользователя из чата
     def remove_user_from_chat(self, chat_id: int, target: int):
         if is_peer_id_own_by_chat(chat_id):
             chat_id -= 2000000000
