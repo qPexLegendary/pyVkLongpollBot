@@ -1,12 +1,14 @@
 import requests
 import asyncio
+from threading import Thread
 import bot_exceptions as ex
 
 
-class Bot:
+class Bot(Thread):
     enabled = True
 
     def __init__(self, token: str, group_id: int):
+        super().__init__()
         self.server = self.ts = self.key = ""
         self.token = token
         self.group_id = group_id
@@ -27,7 +29,7 @@ class Bot:
         self.key = response['key']
         self.ts = response['ts']
 
-    def start(self):
+    def run(self):
         self.update_longpoll()
 
         while self.enabled:
